@@ -5,7 +5,6 @@ import jakarta.persistence.EntityManagerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -27,18 +26,18 @@ import java.util.Properties;
  * Email: hendisantika@yahoo.co.id
  * Telegram : @hendisantika34
  * Date: 09/10/25
- * Time: 05.18
+ * Time: 05.30
  * To change this template use File | Settings | File Templates.
  */
-@Configuration
+@org.springframework.context.annotation.Configuration
+@org.springframework.context.annotation.Profile("test")
 @EnableTransactionManagement
 @EnableJpaRepositories(
         basePackages = "id.my.hendisantika.multitenancymysql.repository",
         entityManagerFactoryRef = "entityManagerFactory",
         transactionManagerRef = "transactionManager"
 )
-@org.springframework.context.annotation.Profile("!test")
-public class DataSourceConfig {
+public class TestDataSourceConfig {
 
     @Bean
     @ConfigurationProperties("spring.datasource.tenant1")
@@ -79,10 +78,9 @@ public class DataSourceConfig {
         em.setJpaVendorAdapter(vendorAdapter);
 
         Properties properties = new Properties();
-        properties.setProperty("hibernate.hbm2ddl.auto", "update");
-        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        properties.setProperty("hibernate.show_sql", "true");
-        properties.setProperty("hibernate.format_sql", "true");
+        properties.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        properties.setProperty("hibernate.show_sql", "false");
+        // Let Hibernate auto-detect the dialect for H2
         em.setJpaProperties(properties);
 
         return em;
