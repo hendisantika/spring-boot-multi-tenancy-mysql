@@ -1,10 +1,8 @@
--- Initialize databases for multi-tenancy
+-- Initialize master database for multi-tenancy
 
-CREATE DATABASE IF NOT EXISTS tenant1_db;
-CREATE DATABASE IF NOT EXISTS tenant2_db;
+CREATE DATABASE IF NOT EXISTS master_db;
 
--- Grant permissions (optional, root already has all permissions)
-GRANT ALL PRIVILEGES ON tenant1_db.* TO 'root'@'%';
-GRANT ALL PRIVILEGES ON tenant2_db.* TO 'root'@'%';
+-- Grant permissions to yu71 user
+GRANT ALL PRIVILEGES ON *.* TO 'yu71'@'%' WITH GRANT OPTION;
 
 FLUSH PRIVILEGES;
