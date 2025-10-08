@@ -1,1 +1,22 @@
 services:
+  mysql:
+    image: mysql:9.4.0
+    container_name: multitenancy-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 53cret
+      MYSQL_DATABASE: tenant1_db
+      MYSQL_USER: yu71
+      MYSQL_PASSWORD: 53cret
+    ports:
+      - "3301:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uyu71", "-p53cret" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_data:
