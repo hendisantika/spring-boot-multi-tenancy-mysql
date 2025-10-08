@@ -4,7 +4,7 @@ services:
     container_name: multitenancy-mysql
     environment:
       MYSQL_ROOT_PASSWORD: 53cret
-      MYSQL_DATABASE: tenant1_db
+      MYSQL_DATABASE: master_db
       MYSQL_USER: yu71
       MYSQL_PASSWORD: 53cret
     ports:
