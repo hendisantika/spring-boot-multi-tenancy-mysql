@@ -110,6 +110,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <mainClass>id.my.hendisantika.multitenancymysql.SpringBootMultiTenancyMysqlApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
