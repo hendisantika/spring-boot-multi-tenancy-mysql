@@ -44,7 +44,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
     @Column(nullable = false)

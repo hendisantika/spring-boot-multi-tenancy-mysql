@@ -35,19 +35,19 @@ public class Tenant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "tenant_id", nullable = false, unique = true)
     private String tenantId;
 
-    @Column(nullable = false)
+    @Column(name = "tenant_name", nullable = false)
     private String tenantName;
 
-    @Column(nullable = false)
+    @Column(name = "db_url", nullable = false)
     private String dbUrl;
 
-    @Column(nullable = false)
+    @Column(name = "db_username", nullable = false)
     private String dbUsername;
 
-    @Column(nullable = false)
+    @Column(name = "db_password", nullable = false)
     private String dbPassword;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -58,7 +58,7 @@ public class TestDataSourceConfig {
         Properties properties = new Properties();
         properties.setProperty("hibernate.hbm2ddl.auto", "create-drop");
         properties.setProperty("hibernate.show_sql", "false");
-        // Let Hibernate auto-detect the dialect for H2
+        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         em.setJpaProperties(properties);
 
         return em;

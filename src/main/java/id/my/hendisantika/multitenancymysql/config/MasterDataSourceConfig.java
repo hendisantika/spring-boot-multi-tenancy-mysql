@@ -33,6 +33,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 @Configuration
+@org.springframework.context.annotation.Profile("!test")
 @EnableTransactionManagement
 @EnableJpaRepositories(
         basePackages = {

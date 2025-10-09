@@ -30,6 +30,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 @Configuration
+@org.springframework.context.annotation.Profile("!test")
 @EnableJpaRepositories(
         basePackages = "id.my.hendisantika.multitenancymysql.repository",
         includeFilters = @org.springframework.context.annotation.ComponentScan.Filter(
