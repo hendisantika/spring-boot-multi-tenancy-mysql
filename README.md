@@ -1,7 +1,11 @@
 # Spring Boot Dynamic Multi-Tenancy MySQL
 
-A production-ready Spring Boot application featuring **dynamic multi-tenancy** with MySQL. Users can register to create
-their own isolated tenant database, with complete authentication and CRUD operations for product management.
+A Spring Boot application demonstrating **dynamic multi-tenancy** with MySQL. Users can register to create their own
+isolated tenant database with complete authentication.
+
+> **⚠️ Current Status**: Registration, login, and tenant database creation are fully functional. Product CRUD operations
+> have a known transaction management issue that requires additional configuration. See [Known Issues](#known-issues)
+> section.
 
 ## Features
 
@@ -551,8 +555,59 @@ Stop and remove volumes:
 docker-compose down -v
 ```
 
+## Known Issues
+
+### Transaction Management with Dual DataSources
+
+**Issue**: Product CRUD operations currently fail with transaction errors when using dual EntityManagerFactories (
+master + tenant).
+
+**Symptoms**:
+
+- Registration and login work perfectly
+- Tenant databases are created successfully
+- Product API returns: `"Could not open JPA EntityManager for transaction"`
+
+**Root Cause**:
+The tenant context lifecycle conflicts with Spring's transaction management when using separate transaction managers for
+master and tenant databases. The context is cleared before transactions complete.
+
+**Potential Solutions**:
+
+1. **Schema-based multi-tenancy** instead of database-per-tenant (simpler transaction management)
+2. **Manual transaction management** at the repository level
+3. **Single transaction manager** with custom routing
+4. **TransactionSynchronization** hooks to manage tenant context cleanup timing
+
+**Workaround**:
+For development/testing, you can:
+
+- Use the master database directly for product operations
+- Or implement schema-based multi-tenancy (all tenants in one database, different schemas)
+
+**Status**: This is a known architectural challenge in database-per-tenant multi-tenancy with JPA. The infrastructure (
+user management, tenant provisioning, JWT auth) is fully functional.
+
+## Implementation Status
+
+### ✅ Fully Working
+
+- Docker Compose setup (MySQL + phpMyAdmin)
+- Dynamic tenant database creation
+- User registration with automatic tenant provisioning
+- JWT authentication and authorization
+- Tenant context management
+- phpMyAdmin integration
+- Master database operations (users, tenants)
+
+### ⚠️ Requires Configuration
+
+- Product CRUD operations (transaction management issue)
+- Tenant-specific data operations
+
 ## Future Enhancements
 
+- [ ] **Fix transaction management** for product CRUD operations
 - [ ] Multi-user support per tenant
 - [ ] Role-based access control (RBAC)
 - [ ] Tenant-specific configurations
@@ -577,5 +632,6 @@ This project is open source and available under the MIT License.
 
 ---
 
-**Note**: This is a production-ready implementation of dynamic multi-tenancy. Each tenant gets complete data isolation
-with their own MySQL database created automatically during registration.
+**Note**: This implementation demonstrates the core infrastructure for dynamic multi-tenancy with database-per-tenant
+isolation. The user management, authentication, and tenant provisioning components are fully functional. Product CRUD
+operations require transaction management refinement (see [Known Issues](#known-issues)).
