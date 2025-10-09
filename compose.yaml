@@ -17,6 +17,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - multitenancy-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: multitenancy-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: yu71
+      PMA_PASSWORD: 53cret
+      MYSQL_ROOT_PASSWORD: 53cret
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - multitenancy-network
+
+networks:
+  multitenancy-network:
+    driver: bridge
 
 volumes:
   mysql_data:
