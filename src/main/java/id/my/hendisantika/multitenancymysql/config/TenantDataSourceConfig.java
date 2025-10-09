@@ -1,18 +1,22 @@
 package id.my.hendisantika.multitenancymysql.config;
 
-import id.my.hendisantika.multitenancymysql.service.TenantService;
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
-import lombok.RequiredArgsConstructor;
+import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +30,6 @@ import javax.sql.DataSource;
  * To change this template use File | Settings | File Templates.
  */
 @Configuration
-@RequiredArgsConstructor
 @EnableJpaRepositories(
         basePackages = "id.my.hendisantika.multitenancymysql.repository",
         includeFilters = @org.springframework.context.annotation.ComponentScan.Filter(
@@ -38,26 +41,57 @@ import javax.sql.DataSource;
 )
 public class TenantDataSourceConfig {
 
+    @Value("${spring.datasource.master.jdbc-url}")
+    private String masterDbUrl;
+
+    @Value("${spring.datasource.master.username}")
+    private String masterUsername;
+
+    @Value("${spring.datasource.master.password}")
+    private String masterPassword;
+
     @Bean(name = "tenantDataSource")
-    public DataSource tenantDataSource(TenantService tenantService) {
-        return new TenantRoutingDataSource(tenantService);
+    public DataSource tenantDataSource() {
+        // Create a single datasource pointing to master connection
+        // We'll switch catalogs (databases) per request using Hibernate multi-tenancy
+        String baseUrl = masterDbUrl.substring(0, masterDbUrl.lastIndexOf('/') + 1);
+
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl(baseUrl); // No specific database - we'll switch via catalog
+        ds.setUsername(masterUsername);
+        ds.setPassword(masterPassword);
+        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        ds.setMaximumPoolSize(20);
+        ds.setMinimumIdle(5);
+
+        return ds;
     }
 
     @Bean(name = "tenantEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean tenantEntityManagerFactory(
-            EntityManagerFactoryBuilder builder,
-            @Qualifier("tenantDataSource") DataSource dataSource) {
-        java.util.Map<String, Object> properties = new java.util.HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "none"); // Don't auto-create schema
-        properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false"); // Skip metadata query at startup
+            @Qualifier("tenantDataSource") DataSource dataSource,
+            JpaProperties jpaProperties,
+            @Qualifier("schemaMultiTenantConnectionProvider") SchemaMultiTenantConnectionProvider connectionProvider,
+            @Qualifier("currentTenantIdentifierResolverImpl") CurrentTenantIdentifierResolverImpl tenantResolver) {
 
-        return builder
-                .dataSource(dataSource)
-                .packages("id.my.hendisantika.multitenancymysql.entity")
-                .persistenceUnit("tenant")
-                .properties(properties)
-                .build();
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        em.setDataSource(dataSource);
+        em.setPackagesToScan("id.my.hendisantika.multitenancymysql.entity");
+        em.setPersistenceUnitName("tenant");
+
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        em.setJpaVendorAdapter(vendorAdapter);
+
+        Map<String, Object> properties = new HashMap<>(jpaProperties.getProperties());
+        // Configure Hibernate multi-tenancy
+        properties.put(AvailableSettings.MULTI_TENANT_CONNECTION_PROVIDER, connectionProvider);
+        properties.put(AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLVER, tenantResolver);
+        properties.put(AvailableSettings.HBM2DDL_AUTO, "none");
+        properties.put(AvailableSettings.SHOW_SQL, true);
+
+        em.setJpaPropertyMap(properties);
+
+        return em;
     }
 
     @Bean(name = "tenantTransactionManager")

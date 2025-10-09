@@ -24,7 +24,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(transactionManager = "tenantTransactionManager")
+@Transactional
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -40,7 +40,7 @@ public class ProductService {
     /**
      * Get all products
      */
-    @Transactional(transactionManager = "tenantTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
         log.info("Fetching all products");
         return productRepository.findAll();
@@ -49,7 +49,7 @@ public class ProductService {
     /**
      * Get product by ID
      */
-    @Transactional(transactionManager = "tenantTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     public Optional<Product> getProductById(Long id) {
         log.info("Fetching product with ID: {}", id);
         return productRepository.findById(id);
@@ -85,7 +85,7 @@ public class ProductService {
     /**
      * Search products by name
      */
-    @Transactional(transactionManager = "tenantTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     public List<Product> searchProductsByName(String name) {
         log.info("Searching products by name: {}", name);
         return productRepository.findByNameContainingIgnoreCase(name);
@@ -94,7 +94,7 @@ public class ProductService {
     /**
      * Get low stock products
      */
-    @Transactional(transactionManager = "tenantTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     public List<Product> getLowStockProducts(Integer threshold) {
         log.info("Fetching products with quantity less than: {}", threshold);
         return productRepository.findByQuantityLessThan(threshold);

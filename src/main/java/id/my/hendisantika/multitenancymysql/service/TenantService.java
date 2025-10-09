@@ -9,11 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
-    private final Map<String, DataSource> tenantDataSources = new ConcurrentHashMap<>();
+
     @Value("${spring.datasource.master.jdbc-url}")
     private String masterDbUrl;
     @Value("${spring.datasource.master.username}")
@@ -62,9 +59,6 @@ public class TenantService {
 
         tenant = tenantRepository.save(tenant);
 
-        // Initialize tenant datasource
-        initializeTenantDataSource(tenant);
-
         // Create schema in tenant database
         createTenantSchema(tenantId);
 
@@ -88,12 +82,17 @@ public class TenantService {
     }
 
     private void createTenantSchema(String tenantId) {
-        DataSource dataSource = tenantDataSources.get(tenantId);
-        if (dataSource == null) {
-            throw new RuntimeException("DataSource not found for tenant: " + tenantId);
-        }
+        // Create a temporary connection to the tenant database to create the schema
+        String dbName = "tenant_" + tenantId + "_db";
+        String dbUrl = masterDbUrl.substring(0, masterDbUrl.lastIndexOf('/') + 1) + dbName;
 
-        try (Connection connection = dataSource.getConnection();
+        HikariDataSource ds = new HikariDataSource();
+        ds.setJdbcUrl(dbUrl);
+        ds.setUsername(masterUsername);
+        ds.setPassword(masterPassword);
+        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+
+        try (Connection connection = ds.getConnection();
              Statement statement = connection.createStatement()) {
 
             // Create products table in tenant database
@@ -114,6 +113,8 @@ public class TenantService {
         } catch (Exception e) {
             log.error("Failed to create schema for tenant: {}", tenantId, e);
             throw new RuntimeException("Failed to create tenant schema", e);
+        } finally {
+            ds.close();
         }
     }
 
@@ -128,38 +129,5 @@ public class TenantService {
         ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
         return ds.getConnection();
-    }
-
-    public void initializeTenantDataSource(Tenant tenant) {
-        if (tenantDataSources.containsKey(tenant.getTenantId())) {
-            return;
-        }
-
-        HikariDataSource ds = new HikariDataSource();
-        ds.setJdbcUrl(tenant.getDbUrl());
-        ds.setUsername(tenant.getDbUsername());
-        ds.setPassword(tenant.getDbPassword());
-        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        ds.setMaximumPoolSize(5);
-        ds.setMinimumIdle(2);
-
-        tenantDataSources.put(tenant.getTenantId(), ds);
-        log.info("Initialized datasource for tenant: {}", tenant.getTenantId());
-    }
-
-    public DataSource getTenantDataSource(String tenantId) {
-        DataSource dataSource = tenantDataSources.get(tenantId);
-
-        if (dataSource == null) {
-            throw new RuntimeException("Tenant datasource not found: " + tenantId +
-                    ". Available tenants: " + tenantDataSources.keySet());
-        }
-
-        return dataSource;
-    }
-
-    public void loadAllTenants() {
-        tenantRepository.findAll().forEach(this::initializeTenantDataSource);
-        log.info("Loaded {} tenant datasources", tenantDataSources.size());
     }
 }

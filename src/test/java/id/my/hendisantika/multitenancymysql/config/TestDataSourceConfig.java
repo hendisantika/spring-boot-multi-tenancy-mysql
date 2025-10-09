@@ -14,8 +14,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -40,31 +38,11 @@ import java.util.Properties;
 public class TestDataSourceConfig {
 
     @Bean
-    @ConfigurationProperties("spring.datasource.tenant1")
-    public DataSource tenant1DataSource() {
-        return DataSourceBuilder.create().type(HikariDataSource.class).build();
-    }
-
-    @Bean
-    @ConfigurationProperties("spring.datasource.tenant2")
-    public DataSource tenant2DataSource() {
-        return DataSourceBuilder.create().type(HikariDataSource.class).build();
-    }
-
-    @Bean
     @Primary
+    @ConfigurationProperties("spring.datasource")
     public DataSource dataSource() {
-        TenantRoutingDataSource router = new TenantRoutingDataSource(null);
-
-        Map<Object, Object> targetDataSources = new HashMap<>();
-        targetDataSources.put("tenant1", tenant1DataSource());
-        targetDataSources.put("tenant2", tenant2DataSource());
-
-        router.setTargetDataSources(targetDataSources);
-        router.setDefaultTargetDataSource(tenant1DataSource());
-        router.afterPropertiesSet();
-
-        return router;
+        // For tests, use a simple H2 in-memory database
+        return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
     @Bean
