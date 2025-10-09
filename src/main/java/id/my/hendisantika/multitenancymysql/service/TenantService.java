@@ -33,7 +33,7 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
     private final Map<String, DataSource> tenantDataSources = new ConcurrentHashMap<>();
-    @Value("${spring.datasource.master.url}")
+    @Value("${spring.datasource.master.jdbc-url}")
     private String masterDbUrl;
     @Value("${spring.datasource.master.username}")
     private String masterUsername;

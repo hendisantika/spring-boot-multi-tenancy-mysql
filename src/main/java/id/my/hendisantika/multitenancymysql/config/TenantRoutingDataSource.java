@@ -21,6 +21,12 @@ public class TenantRoutingDataSource extends AbstractRoutingDataSource {
     private final TenantService tenantService;
 
     @Override
+    public void afterPropertiesSet() {
+        // Skip the default afterPropertiesSet which requires targetDataSources
+        // We'll handle datasource resolution dynamically
+    }
+
+    @Override
     protected Object determineCurrentLookupKey() {
         return TenantContext.getCurrentTenant();
     }

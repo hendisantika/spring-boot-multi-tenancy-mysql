@@ -47,10 +47,15 @@ public class TenantDataSourceConfig {
     public LocalContainerEntityManagerFactoryBean tenantEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
             @Qualifier("tenantDataSource") DataSource dataSource) {
+        java.util.Map<String, Object> properties = new java.util.HashMap<>();
+        properties.put("hibernate.hbm2ddl.auto", "none"); // Don't auto-create schema
+        properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+
         return builder
                 .dataSource(dataSource)
                 .packages("id.my.hendisantika.multitenancymysql.entity")
                 .persistenceUnit("tenant")
+                .properties(properties)
                 .build();
     }
 

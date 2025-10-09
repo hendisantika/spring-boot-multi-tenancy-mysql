@@ -54,7 +54,7 @@ public class TestDataSourceConfig {
     @Bean
     @Primary
     public DataSource dataSource() {
-        MultiTenantDataSourceRouter router = new MultiTenantDataSourceRouter();
+        TenantRoutingDataSource router = new TenantRoutingDataSource(null);
 
         Map<Object, Object> targetDataSources = new HashMap<>();
         targetDataSources.put("tenant1", tenant1DataSource());
