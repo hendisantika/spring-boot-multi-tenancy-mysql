@@ -50,6 +50,7 @@ public class TenantDataSourceConfig {
         java.util.Map<String, Object> properties = new java.util.HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", "none"); // Don't auto-create schema
         properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+        properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false"); // Skip metadata query at startup
 
         return builder
                 .dataSource(dataSource)

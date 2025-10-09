@@ -45,6 +45,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Set tenant context for this request
                 TenantContext.setCurrentTenant(tenantId);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Tenant context set to: " + tenantId + " for user: " + username);
+                }
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
@@ -57,6 +60,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+
+        // Clear tenant context after entire request processing completes
+        TenantContext.clear();
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

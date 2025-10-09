@@ -151,11 +151,8 @@ public class TenantService {
         DataSource dataSource = tenantDataSources.get(tenantId);
 
         if (dataSource == null) {
-            // Load tenant from database and initialize
-            Tenant tenant = tenantRepository.findByTenantId(tenantId)
-                    .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantId));
-            initializeTenantDataSource(tenant);
-            dataSource = tenantDataSources.get(tenantId);
+            throw new RuntimeException("Tenant datasource not found: " + tenantId +
+                    ". Available tenants: " + tenantDataSources.keySet());
         }
 
         return dataSource;
