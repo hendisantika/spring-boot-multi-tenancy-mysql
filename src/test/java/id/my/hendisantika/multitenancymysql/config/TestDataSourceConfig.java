@@ -37,7 +37,7 @@ import java.util.Properties;
 )
 public class TestDataSourceConfig {
 
-    @Bean
+    @Bean(name = {"dataSource", "tenantDataSource"})
     @Primary
     @ConfigurationProperties("spring.datasource")
     public DataSource dataSource() {
