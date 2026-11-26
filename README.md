@@ -1,5 +1,11 @@
 # Spring Boot Dynamic Multi-Tenancy MySQL
 
+[![Java CI with Maven](https://github.com/hendisantika/spring-boot-multi-tenancy-mysql/actions/workflows/maven.yml/badge.svg)](https://github.com/hendisantika/spring-boot-multi-tenancy-mysql/actions/workflows/maven.yml)
+![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.2.0-6DB33F?logo=springboot)
+![MySQL](https://img.shields.io/badge/MySQL-9.4.0-4479A1?logo=mysql&logoColor=white)
+![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot)
+
 A Spring Boot application demonstrating **dynamic multi-tenancy** with MySQL using Hibernate schema-based multi-tenancy.
 Users can register to create their own isolated tenant database with complete authentication and full CRUD operations.
 
@@ -20,16 +26,18 @@ Users can register to create their own isolated tenant database with complete au
 
 ## Tech Stack
 
-- Java 25
-- Spring Boot 3.5.6
-- Spring Security 6.x
-- Spring Data JPA
-- JWT (jsonwebtoken 0.12.6)
+- Java 25 (LTS)
+- Spring Boot 4.2.0
+- Spring Security 7.x
+- Spring Data JPA / Hibernate 7
+- JWT (jjwt 0.13.0)
 - MySQL 9.4.0
 - phpMyAdmin (latest)
 - Lombok
-- Maven
+- Maven (via Maven Wrapper `./mvnw`)
 - Docker Compose
+- H2 (in-memory, tests only)
+- GitHub Actions + Dependabot
 
 ## Architecture
 
@@ -71,8 +79,8 @@ This application implements **Hibernate schema-based multi-tenancy** with separa
 
 ## Prerequisites
 
-- Java 25
-- Maven 3.x
+- JDK 25 (e.g. Temurin / Corretto 25)
+- Maven 3.9+ (or simply use the bundled Maven Wrapper `./mvnw`)
 - Docker and Docker Compose
 
 ## Quick Start
@@ -91,13 +99,13 @@ This starts:
 ### 2. Build the Application
 
 ```bash
-mvn clean install
+./mvnw clean install
 ```
 
 ### 3. Run the Application
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 The application starts on `http://localhost:8080`
@@ -429,7 +437,7 @@ curl -X GET http://localhost:8080/api/products \
 
 ```properties
 # Master Database Configuration
-spring.datasource.master.url=jdbc:mysql://localhost:3301/master_db
+spring.datasource.master.jdbc-url=jdbc:mysql://localhost:3301/master_db?createDatabaseIfNotExist=true
 spring.datasource.master.username=yu71
 spring.datasource.master.password=53cret
 
@@ -502,20 +510,52 @@ server.port=8080
 
 ## Testing
 
-Run tests (with H2 in-memory database):
-```bash
-mvn clean test -DskipTests
-```
-
-Build package:
+Tests run with the `test` profile against an H2 in-memory database (configured in
+`src/test/resources/application-test.properties` and `TestDataSourceConfig`), so no MySQL instance is required:
 
 ```bash
-mvn clean package -DskipTests
+./mvnw clean test
 ```
 
-**Note**: Tests are currently configured to skip due to H2 compatibility issues with the multi-tenancy setup. This does
-not affect the production MySQL implementation, which is fully functional. Future work will update tests to use MySQL
-Testcontainers for full integration testing.
+Full build (compile, test & package):
+
+```bash
+./mvnw clean verify
+```
+
+Build package without tests:
+
+```bash
+./mvnw clean package -DskipTests
+```
+
+**Note**: The H2 test profile verifies that the Spring context loads. Future work will add MySQL Testcontainers for full
+multi-tenancy integration testing.
+
+## CI/CD & Dependency Management
+
+### GitHub Actions
+
+The [`Java CI with Maven`](.github/workflows/maven.yml) workflow runs on every push / pull request to `main` (and can be
+triggered manually via `workflow_dispatch`):
+
+- Sets up **JDK 25 (Temurin)** with Maven dependency caching
+- Runs `./mvnw -B -ntp verify` (compile + tests)
+- Uploads Surefire test reports as a build artifact
+- On push to `main`, submits the Maven dependency graph to GitHub to improve Dependabot alerts
+
+### Dependabot
+
+[`.github/dependabot.yml`](.github/dependabot.yml) keeps dependencies up to date:
+
+| Ecosystem      | Schedule                  | Grouping                                                          |
+|----------------|---------------------------|-------------------------------------------------------------------|
+| Maven          | Daily 05:00 Asia/Jakarta  | `spring-boot`, `jjwt`, `test-dependencies`, `maven-minor-patch`   |
+| GitHub Actions | Daily 05:00 Asia/Jakarta  | all actions in a single PR                                        |
+| Docker Compose | Weekly (Monday 05:00)     | MySQL / phpMyAdmin images                                         |
+
+PRs are labeled (`dependencies`, `java`, `github-actions`, `docker`) and use conventional commit prefixes
+(`build(deps)`, `ci(deps)`, `build(docker)`).
 
 ## Project Structure
 
@@ -527,7 +567,6 @@ src/main/java/id/my/hendisantika/multitenancymysql/
 │   ├── CurrentTenantIdentifierResolverImpl.java    # Hibernate tenant resolver
 │   ├── SchemaMultiTenantConnectionProvider.java    # Hibernate connection provider
 │   ├── TenantContext.java                          # Thread-local tenant storage
-│   ├── TestDataSourceConfig.java                   # Test DB configuration (H2)
 │   └── SecurityConfig.java                         # Spring Security config
 ├── controller/
 │   ├── AuthController.java                         # Auth endpoints
@@ -551,6 +590,16 @@ src/main/java/id/my/hendisantika/multitenancymysql/
     ├── AuthService.java                            # Authentication logic
     ├── TenantService.java                          # Tenant DB management
     └── ProductService.java                         # Product business logic
+
+src/test/java/id/my/hendisantika/multitenancymysql/
+├── config/
+│   └── TestDataSourceConfig.java                   # Test DB configuration (H2)
+└── SpringBootMultiTenancyMysqlApplicationTests.java
+
+.github/
+├── dependabot.yml                                  # Dependabot configuration
+└── workflows/
+    └── maven.yml                                   # CI: build & test on JDK 25
 ```
 
 ## Additional Documentation
@@ -596,6 +645,8 @@ docker-compose down -v
 - phpMyAdmin integration
 - Master database operations (users, tenants)
 - Maven build and packaging
+- CI on JDK 25 with tests (GitHub Actions)
+- Automated dependency updates (Dependabot)
 
 ## Technical Highlights
 
